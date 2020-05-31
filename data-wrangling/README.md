@@ -12,5 +12,10 @@
 
 ## Usage
 ```
-python3 flight_delay.py YYYY-MM YYYY-MM output_filename
+python flight_delay.py YYYY-MM YYYY-MM output_filename
 ```
+Example
+```
+python flight_delay.py 2012-01 2012-12 2012_final
+```
+The filename does not have .csv file extension. Any flight and weather data between given date range will be ready under ~/data/flight_data folder.
