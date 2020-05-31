@@ -1,15 +1,15 @@
 ## Data Wrangling Requirements
-1-Windows Subsystem for Linux (WSL) \
-2-Python3 \
-3-Pandas \
-4-Numpy \
-5-Datetime \
-6-Multiprocessing (for linux or jupyter notebook) \
-7-Selenium \
-8-Progressbar \
-9-Urllib3 \
-10-csvkit \
-11-Google Chrome (83.0.4103.61) and Chromedriver (ChromeDriver 83.0.4103.14)
+1-[Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10) \
+2-[Python3](https://www.python.org/downloads/) \
+3-Pandas ```pip install pandas``` \
+4-Numpy ```pip install numpy``` \
+5-Datetime ```pip install datetime```\
+6-Multiprocessing (for linux or jupyter notebook) ```pip install multiprocessing```\
+7-Selenium ```pip install selenium```\
+8-Progressbar ```pip install progressbar2```\
+9-Urllib3 ```pip install urllib3```\
+10-csvkit ```pip install --upgrade csvkit```\
+11-Google Chrome (83.0.4103.61) and [Chromedriver (ChromeDriver 83.0.4103.14)](https://chromedriver.chromium.org/downloads)
 
 ## Usage
 ```
