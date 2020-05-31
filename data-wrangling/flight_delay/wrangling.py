@@ -4,10 +4,10 @@ import time
 import subprocess
 import numpy as np
 import pandas as pd
-from .utils import *
+from utils import conv_timedelta, conv_type, create_report, df_man, df_par, df_datetime
 import datetime as dt
 from scipy import special
-import multiprocessing as mp
+import multiprocess as mp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -16,13 +16,26 @@ from selenium.webdriver.support import expected_conditions as ec
 
 
 def acquire(date_start, date_end):
+    """Downloads Airline On-Time Performance Data between given range 
+    in a compressed zip format.
+
+    Returns my_path: ~/data/flight_data and my_path2: ~/flight_delay
+    my_path is a directory where all compressed zip files downloaded
+    my_path2 is a directory where shell scripts (csv_process.sh) is
+
+    Parameters
+    ----------
+    date_start : string
+        Start Date
+    date_end : string
+        End Date
+    """
     my_path = os.path.abspath(os.path.dirname(__file__))
-    my_path = os.path.dirname(os.path.dirname(my_path))
-    my_path = os.path.join(my_path, '' + 'data/flight_data')
+    my_path = os.path.dirname(my_path)
+    my_path = os.path.join(my_path, '' + 'data\\flight_data')
 
     options = webdriver.ChromeOptions()
-    options.add_argument("headless")
-    options.add_argument('--disable-gpu')
+    options.add_argument("--start-fullscreen")
     options.add_argument('window-size=1920x1080')
     prefs = {"download.default_directory": my_path,
              "download.prompt_for_download": False,
@@ -30,9 +43,8 @@ def acquire(date_start, date_end):
 
     options.add_experimental_option('prefs', prefs)
     # Use chrome as a web browser
-    browser = webdriver.Chrome(executable_path="/usr/bin/chromedriver", chrome_options=options)
-
-    enable_download_headless(browser, my_path)
+    browser = webdriver.Chrome(
+        executable_path="C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver", chrome_options=options)
     # Main page URL
     url = 'https://www.bts.gov/'
     # Get main page
@@ -41,8 +53,10 @@ def acquire(date_start, date_end):
     # Browser wait
     wait = WebDriverWait(browser, 30)
     # Navigate to database directory
-    wait.until(ec.element_to_be_clickable((By.XPATH, "//ul[@id='main-menu']//li[@class='menu-8756']")))
-    browser.find_element_by_xpath("//ul[@id='main-menu']//li[@class='menu-8756']").click()
+    wait.until(ec.element_to_be_clickable(
+        (By.XPATH, "//ul[@id='main-menu']//li[@class='menu-8756']")))
+    browser.find_element_by_xpath(
+        "//ul[@id='main-menu']//li[@class='menu-8756']").click()
 
     x_path = "//div[contains(@class,'panel-pane pane-block pane-menu-menu-browse-statistics-statistic .region-footer " \
              "ul.menu pane-menu')]//a[contains(@class,'menu__link')][contains(text(),'A-Z Index')] "
@@ -57,7 +71,8 @@ def acquire(date_start, date_end):
     wait.until(ec.element_to_be_clickable((By.XPATH, "//tr[7]//td[2]//a[3]")))
     browser.find_elements_by_link_text('Download')[1].click()
     # Check the box for all zipped data
-    wait.until(ec.element_to_be_clickable((By.XPATH, "//input[@id='DownloadZip']")))
+    wait.until(ec.element_to_be_clickable(
+        (By.XPATH, "//input[@id='DownloadZip']")))
     browser.find_element_by_id('DownloadZip').click()
     # Select from dropdown menu
     select_year = Select(browser.find_element_by_id('XYEAR'))
@@ -75,8 +90,10 @@ def acquire(date_start, date_end):
             for month in range(ds_m, 13, 1):
                 select_year.select_by_visible_text(str(year))
                 select_month.select_by_value(str(month))
-                wait.until(ec.element_to_be_clickable((By.XPATH, "//button[@name='Download2']")))
-                browser.find_element_by_xpath("//button[@name='Download2']").click()
+                wait.until(ec.element_to_be_clickable(
+                    (By.XPATH, "//button[@name='Download2']")))
+                browser.find_element_by_xpath(
+                    "//button[@name='Download2']").click()
                 if (year == de_y) & (month == de_m):
                     raise StopIteration
             ds_m = 1
@@ -95,26 +112,66 @@ def acquire(date_start, date_end):
             x1 = 1
         else:
             x1 = 0
-    print('Downloading is complete')
+    print('Downloading files is completed')
     # Close browser
     browser.close()
 
     my_path2 = os.path.dirname(os.path.dirname(my_path))
-    my_path2 = os.path.join(my_path2, '' + 'src/acquire')
+    my_path2 = os.path.join(my_path2, 'flight_delay')
     return my_path, my_path2
 
 
 def combine_csv(path1, path2):
+    """Unzips compressed files first and concatenates these files
+    into one file. It removes any leftover files and folder.
+
+    Returns nothing. Final file should be under ~/data/flight_data
+    folder
+
+    Parameters
+    ----------
+    path1 : string
+        ~/data/flight_data
+    path2 : string
+        ~/flight_delay
+    """
+    temp = path2.split('\\')
+    path2 = '/mnt/c/' + '/'.join(temp[1:])
+    temp = path1.split('\\')
+    path1 = '/mnt/c/' + '/'.join(temp[1:])
     cmd_line = path2 + '/csv_process.sh'
     # No need to have +x permission
-    subprocess.run(['/bin/bash', cmd_line, path1])
+    subprocess.run(['bash', cmd_line, path1])
 
 
 def import_csv(p_fli, sd, ed):
+    """Imports csv folders and concatenates them if there are
+    multiple files between date range
+
+    Returns df : pandas data frame 
+                airline on-time performance
+            airport : pandas data frame
+                airport information
+            icao : pandas data frame
+                ICAO codes of airports
+            n : int
+                number of rows in df
+            d : int
+                number of columns in df
+    Parameters
+    ----------
+    p_fli : string
+        path to folder ~/data/flight_data
+    sd : string
+        Start Date
+    ed : string
+        End date
+    """
     csv_files = pd.period_range(sd, ed, freq='Y').strftime('%Y')
     temp_list = []
     for idx in csv_files:
-        temp_list.append(pd.read_csv(p_fli + '\\' + idx + '.csv', low_memory=False))
+        temp_list.append(pd.read_csv(
+            p_fli + '\\' + idx + '.csv', low_memory=False))
         print(idx + '.csv is imported')
 
     df = pd.concat(temp_list)
@@ -129,20 +186,44 @@ def import_csv(p_fli, sd, ed):
                   'SecDel', 'LatAirDel']
     # Airport Data frame
     p_misc = os.path.join(os.path.dirname(p_fli), '' + 'misc')
-    airport = pd.read_csv(p_misc + '\\airport.csv', usecols = [0, 1, 2, 3, 4, 5, 6, 11, 16, 17])
-    icao = pd.read_csv(p_misc + '\\icao.csv', usecols = [4, 5])
+    airport = pd.read_csv(p_misc + '\\airport.csv',
+                          usecols=[0, 1, 2, 3, 4, 5, 6, 11, 16, 17])
+    icao = pd.read_csv(p_misc + '\\icao.csv', usecols=[4, 5])
     icao.columns = ['Code', 'ICAO']
-    airport.columns = ['AirID', 'Code', 'Name', 'City', 'Country', 'State', 'CityMarketID', 'Lat', 'Long', 'UTC']
+    airport.columns = ['AirID', 'Code', 'Name', 'City',
+                       'Country', 'State', 'CityMarketID', 'Lat', 'Long', 'UTC']
     airport = airport.drop_duplicates(subset='AirID', keep='last')
     n, d = df.shape
     return df, airport, icao, n, d
 
 
 def init_check(df, airport, sd, ed, d):
-    # Data identifier
-    # if flag is 1: null entries
-    # if flag is 2: out of range
-    # if flag is 3: both null and out of range
+    """Initially checks all entries in data frames whether
+    they are out of bound, null entries, or both, then flags them.
+
+    Returns df : pandas data frame 
+                airline on-time performance
+            airport : pandas data frame
+                airport information
+            flag : dictionary
+                column flags 1 for null, 2 for out of bound, and 3 for both
+            date3 : pandas series
+                values of date column under flag 3. Will be removed later on
+
+    Parameters
+    ----------
+    df : pandas data frame
+        Airline on-time performance data
+    airport : pandas data frame
+        Airport data
+    sd : string
+        Start Date
+    ed : string
+        End date
+    d : int
+        Number of columns in df
+    """
+
     flag = dict(zip(df.columns, np.zeros(d)))
 
     # List of numerical columns
@@ -298,16 +379,23 @@ def init_check(df, airport, sd, ed, d):
 
     # Fill null rows under all delay columns
     df.iloc[:, 26:] = df.iloc[:, 26:].fillna(0)
-
+    print("Initial check is completed")
     return df, airport, flag, date3
 
 
 def reval_nan(df):
-    """
-    This function checks whether null entries are
+    """This function checks whether null entries are
     related to cancelled and diverted flights or not.
     If they are related, it leaves them as it is, if
     it is not, it tries to recover them.
+
+    Returns df : pandas data frame 
+                Airline on-time performance
+
+    Parameters
+    ----------
+    df : pandas data frame
+        Airline on-time performance data
     """
     # These columns are null when a flight is cancelled
     canc_cols = ['DepTime', 'DepDelay', 'TxO', 'WhOff', 'WhOn',
@@ -321,29 +409,38 @@ def reval_nan(df):
     for col in div_cols:
         df.loc[(df.Div == 1) & df[col].notna(), div_cols] = np.nan
 
-    cond = lambda x: (pd.isna(df[x])) & ((df.Cncl != 1) | (df.Div != 1))
-    df.loc[cond('DepTime'), 'DepTime'] = df.loc[cond('DepTime'), 'ScDepTime'] + df.loc[cond('DepTime'), 'DepDelay']
+    # A condition for missing data
+    def cond(x): return (pd.isna(df[x])) & ((df.Cncl != 1) | (df.Div != 1))
+    df.loc[cond('DepTime'), 'DepTime'] = df.loc[cond('DepTime'),
+                                                'ScDepTime'] + df.loc[cond('DepTime'), 'DepDelay']
     df.loc[cond('DepTime'), 'DepTime'] = pd.NaT
-    df.loc[cond('DepDelay'), 'DepDelay'] = df.loc[cond('DepDelay'), 'ScDepTime'] - df.loc[cond('DepDelay'), 'DepTime']
+    df.loc[cond('DepDelay'), 'DepDelay'] = df.loc[cond('DepDelay'),
+                                                  'ScDepTime'] - df.loc[cond('DepDelay'), 'DepTime']
     df.loc[cond('DepDelay'), 'DepDelay'] = pd.NaT
-    df.loc[cond('TxO'), 'TxO'] = df.loc[cond('TxO'), 'WhOff'] - df.loc[cond('TxO'), 'DepTime']
+    df.loc[cond('TxO'), 'TxO'] = df.loc[cond('TxO'), 'WhOff'] - \
+        df.loc[cond('TxO'), 'DepTime']
     df.loc[cond('TxO'), 'TxO'] = pd.NaT
-    df.loc[cond('WhOff'), 'WhOff'] = df.loc[cond('WhOff'), 'DepTime'] + df.loc[cond('WhOff'), 'TxO']
+    df.loc[cond('WhOff'), 'WhOff'] = df.loc[cond('WhOff'),
+                                            'DepTime'] + df.loc[cond('WhOff'), 'TxO']
     df.loc[cond('WhOff'), 'WhOff'] = pd.NaT
-    df.loc[cond('WhOn'), 'WhOn'] = df.loc[cond('WhOn'), 'ArrTime'] - df.loc[cond('WhOn'), 'TxI']
+    df.loc[cond('WhOn'), 'WhOn'] = df.loc[cond('WhOn'),
+                                          'ArrTime'] - df.loc[cond('WhOn'), 'TxI']
     df.loc[cond('WhOn'), 'WhOn'] = pd.NaT
-    df.loc[cond('TxI'), 'TxI'] = df.loc[cond('TxI'), 'ArrTime'] - df.loc[cond('TxI'), 'WhOn']
+    df.loc[cond('TxI'), 'TxI'] = df.loc[cond('TxI'),
+                                        'ArrTime'] - df.loc[cond('TxI'), 'WhOn']
     df.loc[cond('TxI'), 'TxI'] = pd.NaT
-    df.loc[cond('ArrTime'), 'ArrTime'] = df.loc[cond('ArrTime'), 'ScArrTime'] + df.loc[cond('ArrTime'), 'ArrDelay']
+    df.loc[cond('ArrTime'), 'ArrTime'] = df.loc[cond('ArrTime'),
+                                                'ScArrTime'] + df.loc[cond('ArrTime'), 'ArrDelay']
     df.loc[cond('ArrTime'), 'ArrTime'] = pd.NaT
-    df.loc[cond('ArrDelay'), 'ArrDelay'] = df.loc[cond('ArrDelay'), 'ArrTime'] - df.loc[cond('ArrDelay'), 'ScArrTime']
+    df.loc[cond('ArrDelay'), 'ArrDelay'] = df.loc[cond('ArrDelay'),
+                                                  'ArrTime'] - df.loc[cond('ArrDelay'), 'ScArrTime']
     df.loc[cond('ArrDelay'), 'ArrDelay'] = pd.NaT
     df.ArrTime = df.DepTime + df.AcElaTime + df.TimeZoneDiff
     df.ScArrTime = df.ArrTime - df.ArrDelay
     df.WhOn = df.ArrTime - df.TxI
     df.loc[df.ScArrTime.isnull(), 'ScArrTime'] = df.loc[df.ScArrTime.isnull(), 'ScDepTime'] + \
-                                                 df.loc[df.ScArrTime.isnull(), 'TimeZoneDiff'] + \
-                                                 df.loc[df.ScArrTime.isnull(), 'ScElaTime']
+        df.loc[df.ScArrTime.isnull(), 'TimeZoneDiff'] + \
+        df.loc[df.ScArrTime.isnull(), 'ScElaTime']
     # Now update DepDelay and ArrDelay
     df.DepDelay = df.DepTime - df.ScDepTime
     df.ArrDelay = df.ArrTime - df.ScArrTime
@@ -351,8 +448,29 @@ def reval_nan(df):
 
 
 def recover(df, airport, flag, date3, n, d):
-    st = time.time()
+    """Removes and/or imputes data if specific conditions are met.
 
+
+    Returns df : pandas data frame 
+                Airline on-time performance
+
+    Parameters
+    ----------
+    df : pandas data frame 
+        Airline on-time performance
+    airport : pandas data frame
+        Airport information
+    flag : dictionary
+        Column flags 1 for null, 2 for out of bound, and 3 for both
+    date3 : pandas series
+        Values of date column under flag 3. Will be removed later on
+    n : int
+        Number of rows in df
+    d : int
+        Number of columns in df
+    """
+    st = time.time()
+    print("Recovering data has started", end="\r")
     # Recovering WeekDay using Date column only for null entries
     if flag['WeekDay'] == 1:
         cond = df.WeekDay.isnull()
@@ -386,7 +504,8 @@ def recover(df, airport, flag, date3, n, d):
             # out of range + null entries
             df = df.loc[(df.WeekDay.notna()) | (df.WeekDay.loc[~cond]), :]
 
-    # Removing null or out of range Date, IATA, TailNum, OrgAirID, DestAirID entries because not way to recover it
+    # Removing null or out of range Date, IATA, TailNum, OrgAirID, 
+    # DestAirID entries because not way to recover it
     if flag['Date']:
         df = df.loc[df.Date.notna(), :]
         df = df.loc[df.Date != date3, :]
@@ -409,27 +528,33 @@ def recover(df, airport, flag, date3, n, d):
 
     # Recovering City Market ID's using supplementary data frame, airport
     if flag['OrgMarID']:
-        cond = (df.OrgMarID <= 30001) | (df.OrgMarID >= 36845) | (df.OrgMarID.isnull())
+        cond = (df.OrgMarID <= 30001) | (
+            df.OrgMarID >= 36845) | (df.OrgMarID.isnull())
         ntemp = cond.sum()
         array = df.loc[cond, 'OrgAirID'].drop_duplicates().values
         names = airport[airport.AirID.isin(array)][['AirID', 'CityMarketID']]
         for idx, val in names.iterrows():
             # np.where is much faster!
-            df.OrgMarID = np.where(cond | (df.OrgAirID == val[0]), val[1], df.OrgMarID.values)
+            df.OrgMarID = np.where(
+                cond | (df.OrgAirID == val[0]), val[1], df.OrgMarID.values)
         # Recheck condition (In case both OrgAirID and OrgMarID is not available)
-        cond = (df.OrgMarID <= 30001) | (df.OrgMarID >= 36845) | (df.OrgMarID.isnull())
+        cond = (df.OrgMarID <= 30001) | (
+            df.OrgMarID >= 36845) | (df.OrgMarID.isnull())
         df = df.loc[~cond, :]
 
     if flag['DestMarID']:
-        cond = (df.DestMarID <= 30001) | (df.DestMarID >= 36845) | (df.DestMarID.isnull())
+        cond = (df.DestMarID <= 30001) | (
+            df.DestMarID >= 36845) | (df.DestMarID.isnull())
         ntemp = cond.sum()
         array = df.loc[cond, 'DestAirID'].drop_duplicates().values
         names = airport[airport.AirID.isin(array)][['AirID', 'CityMarketID']]
         for idx, val in names.iterrows():
             # np.where is much faster!
-            df.DestMarID = np.where(cond | (df.DestAirID == val[0]), val[1], df.DestMarID.values)
+            df.DestMarID = np.where(
+                cond | (df.DestAirID == val[0]), val[1], df.DestMarID.values)
         # Recheck condition (In case both DestAirID and DestMarID are not available)
-        cond = (df.DestMarID <= 30001) | (df.DestMarID >= 36845) | (df.DestMarID.isnull())
+        cond = (df.DestMarID <= 30001) | (
+            df.DestMarID >= 36845) | (df.DestMarID.isnull())
         df = df.loc[~cond, :]
 
     if flag['Div']:
@@ -446,34 +571,37 @@ def recover(df, airport, flag, date3, n, d):
 
     if flag['Cncl']:
         cond = (df.Cncl.isnull()) | (df.Cncl > 1) | (df.Cncl < 0)
-        cols = ['DepTime', 'DepDelay', 'TxO', 'WhOff', 'ArrTime', 'ArrDelay', 'AcElaTime', 'AirTime', 'TxI', 'WhOn']
+        cols = ['DepTime', 'DepDelay', 'TxO', 'WhOff', 'ArrTime',
+                'ArrDelay', 'AcElaTime', 'AirTime', 'TxI', 'WhOn']
         var = df.loc[cond, :][cols]
         if (var.isnull().sum().isin([10]).sum()) == (df.loc[cond, :].shape[0]):
             df.loc[cond, 'Cncl'] = 1
         else:
             df = df.loc[~cond, :]
 
-    cols = ['DepTime', 'DepDelay', 'TxO', 'WhOff', 'ArrTime', 'ArrDelay', 'AcElaTime', 'AirTime', 'TxI', 'WhOn']
+    cols = ['DepTime', 'DepDelay', 'TxO', 'WhOff', 'ArrTime',
+            'ArrDelay', 'AcElaTime', 'AirTime', 'TxI', 'WhOn']
     df.loc[df.Cncl == 1, cols] = np.nan
 
     # There is no way to guess cancellation code
     if flag['CnclCd']:
         cond = (df.CnclCd.notna()) | (df.CnclCd.isin(range(5)))
         df = df.loc[cond, :]
-
+    # There is no way to guess Scheduled Departure Time
     if flag['ScDepTime']:
-        cond = (df.ScDepTime.isnull()) | (df.ScDepTime < 0) | (df.ScDepTime > 2400)
+        cond = (df.ScDepTime.isnull()) | (
+            df.ScDepTime < 0) | (df.ScDepTime > 2400)
         df = df.loc[~cond, :]
-
+    # There is no way to guess Scheduled Arrival Time
     if flag['ScArrTime']:
-        cond = (df.ScArrTime.isnull()) | (df.ScArrTime < 0) | (df.ScArrTime > 2400)
+        cond = (df.ScArrTime.isnull()) | (
+            df.ScArrTime < 0) | (df.ScArrTime > 2400)
         df = df.loc[~cond, :]
-
+    # There is no way to guess Scheduled Elapsed Time
     if flag['ScElaTime']:
         cond = df.ScElaTime.isnull()
         df = df.loc[~cond, :]
-    et = time.time()
-    print("Recovering columns takes ", str(et - st), " seconds")
+
     # Let's shrink size of the dataframe!
     types = {0: 'int8', 1: object, 2: 'category', 3: 'category', 4: 'int16', 5: 'int16',
              6: 'int32', 7: 'int16', 8: 'int32', 19: 'bool', 20: 'category', 21: 'bool',
@@ -488,21 +616,23 @@ def recover(df, airport, flag, date3, n, d):
         conv_type(airport, key, val)
 
     cols = ['ScDepTime', 'ScArrTime', 'DepTime', 'ArrTime', 'WhOff', 'WhOn']
-    time_start = time.time()
-    df[cols] = df_par(df[cols], df_man)
-    print('Parallel computation is finished in ', time.time() - time_start, 'seconds')
+    for name in cols:
+        df[name] = df_man(df[name])
+
     df['Date'] = df.Date.str.replace('-', '')
+
     for col_name in cols:
         df[col_name] = df.Date + ' ' + df[col_name]
-    time_start = time.time()
+
     for col_name in cols:
         df[col_name] = df_datetime(df[col_name])
-    print('Datetime assignment is done in ', time.time() - time_start, 'seconds')
+
     # No need to have Date column
     df = df.drop(columns=['Date'])
     # Temp assignment for re-evaluation of nan entries
     # Actual arrival time might be the day after
-    cols = ['DepDelay', 'TxO', 'TxI', 'ArrDelay', 'ScElaTime', 'AcElaTime', 'AirTime']
+    cols = ['DepDelay', 'TxO', 'TxI', 'ArrDelay',
+            'ScElaTime', 'AcElaTime', 'AirTime']
     for col in cols:
         conv_timedelta(df, col, 'min')
 
@@ -516,5 +646,6 @@ def recover(df, airport, flag, date3, n, d):
     # Re-evaluate nans
     df = reval_nan(df)
     df = df.reset_index(drop=True)
-
+    et = time.time()
+    print("Recovering data has completed in {:.2f} seconds".format(et-st))
     return df
