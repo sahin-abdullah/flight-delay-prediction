@@ -8,7 +8,8 @@
 7-Selenium \
 8-Progressbar \
 9-Urllib3 \
-10- Google Chrome (83.0.4103.61) and Chromedriver (ChromeDriver 83.0.4103.14)
+10-csvkit \
+11-Google Chrome (83.0.4103.61) and Chromedriver (ChromeDriver 83.0.4103.14)
 
 ## Usage
 ```
