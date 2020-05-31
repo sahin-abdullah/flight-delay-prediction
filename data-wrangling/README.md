@@ -9,7 +9,7 @@
 8-Progressbar ```pip install progressbar2```\
 9-Urllib3 ```pip install urllib3```\
 10-csvkit ```pip install --upgrade csvkit```\
-11-Google Chrome (83.0.4103.61) and [Chromedriver (ChromeDriver 83.0.4103.14)](https://chromedriver.chromium.org/downloads)
+11-Google Chrome (83.0.4103.61) and [Chromedriver (83.0.4103.14)](https://chromedriver.chromium.org/downloads)
 
 ## Usage
 ```
