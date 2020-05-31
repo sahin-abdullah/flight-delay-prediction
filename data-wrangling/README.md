@@ -11,7 +11,7 @@
 10-csvkit ```pip install --upgrade csvkit```\
 11-Google Chrome (83.0.4103.61) and [Chromedriver (83.0.4103.14)](https://chromedriver.chromium.org/downloads)
 
-Note: Chrome browser and driver needs to be the same version!
+Note: Chrome browser and driver need to be the same version!
 
 ## Usage
 ```
