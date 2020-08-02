@@ -7,7 +7,7 @@ import pandas as pd
 from utils import conv_timedelta, conv_type, create_report, df_man, df_par, df_datetime
 import datetime as dt
 from scipy import special
-import multiprocess as mp
+import multiprocessing as mp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -35,7 +35,8 @@ def acquire(date_start, date_end):
     my_path = os.path.join(my_path, '' + 'data\\flight_data')
 
     options = webdriver.ChromeOptions()
-    options.add_argument("--start-fullscreen")
+    # options.add_argument("--start-fullscreen")
+    options.add_argument("--headless")  
     options.add_argument('window-size=1920x1080')
     prefs = {"download.default_directory": my_path,
              "download.prompt_for_download": False,
@@ -409,41 +410,45 @@ def reval_nan(df):
     for col in div_cols:
         df.loc[(df.Div == 1) & df[col].notna(), div_cols] = np.nan
 
+    # cond = flights.ScDepTime > flights.ScArrTime
+    # idx = ((flights.loc[cond, 'ScDepTime'] + flights.loc[cond, 'ScElaTime'] + flights.loc[cond, 'TimeZoneDiff']) - flights.loc[cond, 'ScArrTime']) >= pd.Timedelta('1 hours')
+    # idx = np.where(idx, idx.index, 0)
+    # idx = idx[idx != 0]
+    # flights.drop(idx, inplace=True)
+
     # A condition for missing data
     def cond(x): return (pd.isna(df[x])) & ((df.Cncl != 1) | (df.Div != 1))
     df.loc[cond('DepTime'), 'DepTime'] = df.loc[cond('DepTime'),
                                                 'ScDepTime'] + df.loc[cond('DepTime'), 'DepDelay']
-    df.loc[cond('DepTime'), 'DepTime'] = pd.NaT
+    # df.loc[cond('DepTime'), 'DepTime'] = pd.NaT
     df.loc[cond('DepDelay'), 'DepDelay'] = df.loc[cond('DepDelay'),
                                                   'ScDepTime'] - df.loc[cond('DepDelay'), 'DepTime']
-    df.loc[cond('DepDelay'), 'DepDelay'] = pd.NaT
+    # df.loc[cond('DepDelay'), 'DepDelay'] = pd.NaT
     df.loc[cond('TxO'), 'TxO'] = df.loc[cond('TxO'), 'WhOff'] - \
         df.loc[cond('TxO'), 'DepTime']
-    df.loc[cond('TxO'), 'TxO'] = pd.NaT
+    # df.loc[cond('TxO'), 'TxO'] = pd.NaT
     df.loc[cond('WhOff'), 'WhOff'] = df.loc[cond('WhOff'),
                                             'DepTime'] + df.loc[cond('WhOff'), 'TxO']
-    df.loc[cond('WhOff'), 'WhOff'] = pd.NaT
+    # df.loc[cond('WhOff'), 'WhOff'] = pd.NaT
     df.loc[cond('WhOn'), 'WhOn'] = df.loc[cond('WhOn'),
                                           'ArrTime'] - df.loc[cond('WhOn'), 'TxI']
-    df.loc[cond('WhOn'), 'WhOn'] = pd.NaT
+    # df.loc[cond('WhOn'), 'WhOn'] = pd.NaT
     df.loc[cond('TxI'), 'TxI'] = df.loc[cond('TxI'),
                                         'ArrTime'] - df.loc[cond('TxI'), 'WhOn']
-    df.loc[cond('TxI'), 'TxI'] = pd.NaT
+    # df.loc[cond('TxI'), 'TxI'] = pd.NaT
     df.loc[cond('ArrTime'), 'ArrTime'] = df.loc[cond('ArrTime'),
                                                 'ScArrTime'] + df.loc[cond('ArrTime'), 'ArrDelay']
-    df.loc[cond('ArrTime'), 'ArrTime'] = pd.NaT
+    # df.loc[cond('ArrTime'), 'ArrTime'] = pd.NaT
     df.loc[cond('ArrDelay'), 'ArrDelay'] = df.loc[cond('ArrDelay'),
                                                   'ArrTime'] - df.loc[cond('ArrDelay'), 'ScArrTime']
-    df.loc[cond('ArrDelay'), 'ArrDelay'] = pd.NaT
-    df.ArrTime = df.DepTime + df.AcElaTime + df.TimeZoneDiff
-    df.ScArrTime = df.ArrTime - df.ArrDelay
+    # df.loc[cond('ArrDelay'), 'ArrDelay'] = pd.NaT
+    df.DepTime = df.ScDepTime + df.DepDelay
+    df.WhOff = df.DepTime + df.TxO
+    mask = df.ScDepTime > df.ScArrTime
+    df.loc[mask, 'ScArrTime'] = df.loc[mask, 'ScDepTime'] + df.loc[mask, 'ScElaTime'] + df.loc[mask, 'TimeZoneDiff']
+    df.ArrTime = df.ScArrTime + df.ArrDelay
     df.WhOn = df.ArrTime - df.TxI
-    df.loc[df.ScArrTime.isnull(), 'ScArrTime'] = df.loc[df.ScArrTime.isnull(), 'ScDepTime'] + \
-        df.loc[df.ScArrTime.isnull(), 'TimeZoneDiff'] + \
-        df.loc[df.ScArrTime.isnull(), 'ScElaTime']
-    # Now update DepDelay and ArrDelay
-    df.DepDelay = df.DepTime - df.ScDepTime
-    df.ArrDelay = df.ArrTime - df.ScArrTime
+
     return df
 
 
@@ -624,17 +629,20 @@ def recover(df, airport, flag, date3, n, d):
     for col_name in cols:
         df[col_name] = df.Date + ' ' + df[col_name]
 
-    for col_name in cols:
-        df[col_name] = df_datetime(df[col_name])
+    cols = ['DepDelay', 'TxO', 'TxI', 'ArrDelay',
+        'ScElaTime', 'AcElaTime', 'AirTime']
+    for col in cols:
+        conv_timedelta(df, col, 'min')
+    # for name in cols:
+    #     df.loc[:, name] = df_par(df.loc[:, name], pd.to_timedelta)
 
     # No need to have Date column
     df = df.drop(columns=['Date'])
     # Temp assignment for re-evaluation of nan entries
     # Actual arrival time might be the day after
-    cols = ['DepDelay', 'TxO', 'TxI', 'ArrDelay',
-            'ScElaTime', 'AcElaTime', 'AirTime']
-    for col in cols:
-        conv_timedelta(df, col, 'min')
+    cols = ['ScDepTime', 'ScArrTime', 'DepTime', 'ArrTime', 'WhOff', 'WhOn']
+    for col_name in cols:
+        df[col_name] = df_datetime(df[col_name])
 
     df = df.reset_index(drop=True)
     utc_org = pd.merge(df, airport[['AirID', 'UTC']], left_on='OrgAirID',
@@ -648,4 +656,4 @@ def recover(df, airport, flag, date3, n, d):
     df = df.reset_index(drop=True)
     et = time.time()
     print("Recovering data has completed in {:.2f} seconds".format(et-st))
-    return df
+    return df.sort_values('ScDepTime')
