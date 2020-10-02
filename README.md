@@ -1,2 +1,2 @@
-# flight-delay-prediction
-Everything about flight delay prediction: data collecting, cleaning, exploratory data analysis, and modeling
+# Flight Delay Prediction using Logistic Regression
+[embed]https://drive.google.com/file/d/15YfoaIiOKbXFE3q1cmPcjXZngokBdjM2/view?usp=sharing[/embed]
