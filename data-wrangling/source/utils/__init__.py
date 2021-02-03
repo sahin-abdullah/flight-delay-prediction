@@ -1,7 +1,6 @@
 # Utile functions
 import numpy as np
 import pandas as pd
-import multiprocessing as mp
 
 
 def enable_download_headless(browser, download_dir):
@@ -52,19 +51,6 @@ def df_man(df):
     """
     df = df.astype(str).replace('\.0', '', regex=True)
     df = df.apply(lambda x: x.zfill(4))
-    return df
-
-
-def df_par(df, func):
-    """
-    Parallel implementation. Does work in Windows.
-    Only works in Jupyter Notebook and Linux.
-    """
-    df_split = np.array_split(df, mp.cpu_count())
-    pool = mp.Pool(mp.cpu_count())
-    df = pd.concat(pool.map(func, df_split))
-    pool.close()
-    del df_split
     return df
 
 
