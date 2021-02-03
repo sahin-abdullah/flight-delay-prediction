@@ -22,10 +22,11 @@ In this repository, I evaluated these reasons and modeled the data using logisti
 5. JupyterLab ➡️ ```python -m pip install jupyter```
 6. Matplotlib ➡️ ```pip install matplotlib```
 7. Progressbar2  ➡️ ```pip install progressbar2```
-8. Selenium ➡️ ```pip install selenium```
-9. Seaborn ➡️ ```pip install seaborn```
-10. Plotly ➡️ ```pip install plotly```
-11. Sklearn ➡️ ```pip install sklearn```
+8. Federal Holidays ➡️ ```pip install holidays```
+9. Selenium ➡️ ```pip install selenium```
+10. Seaborn ➡️ ```pip install seaborn```
+11. Plotly ➡️ ```pip install plotly```
+12. Sklearn ➡️ ```pip install sklearn```
 
 # Gathering Data
 
