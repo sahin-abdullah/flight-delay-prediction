@@ -1,5 +1,5 @@
 # Flight Delay Prediction
-![Cover Image](images\cover_image.jpg)
+![Cover Image](https://github.com/sahin-abdullah/flight-delay-prediction/blob/master/images/cover_image.jpg)
 
 # Intoduction
 Welcome to my flight delay prediction repository ✈️. In the last ten years, according to the Bureau of Transportation Statistics (BTS), only 79.63% [1] of all flights have performed on time. Only a few remaining percentages were cancelled or diverted, less than 2%; rest of them were delayed mainly due to late arriving aircraft followed by the cause of the national aviation system and air carrier. Averagely speaking, 720 million people were on board and 144 million of those were affected by flight delays caused by five main reasons. Those reasons are:
