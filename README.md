@@ -70,7 +70,7 @@ From daily interval perspective,
 
 ## Holidays
 
-![Cover Image](https://github.com/sahin-abdullah/flight-delay-prediction/blob/master/images/holidays.pngg)
+![Cover Image](https://github.com/sahin-abdullah/flight-delay-prediction/blob/master/images/holidays.png)
 
 The graph above shows average amount of delay per day in four quarters of a year. Blue shaded area represents plus and minus five days from national holidays (in total 10 days). Federal Aviation Administration (FAA) considers any flight that is late more than 15 minutes as a delay. That's why I also emphasized 15 minutes with a dashed line in the plot. The increase in average delays before and after the national holidays can be associated with higher traffic density of the airports. This can be seen in the following figure.
 
