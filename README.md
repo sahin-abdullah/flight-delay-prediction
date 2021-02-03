@@ -82,13 +82,13 @@ In this figure, the maximum wind speeds for each direction oberved in top 12 US 
 
 # Modeling
 
-Intead of focusing whole dataset, we prefer to only work on a subset of dataset which we call slicing our problem. Slicing can reduce the number of the features along with better prediction. We chose to slice our problem per origin airport and month of the year basis. After grouping data per origin airport and month of the year, there are few things need to be done on the data. We outlined those steps below:
+Intead of focusing whole dataset, I prefer to only work on a subset of dataset which I call slicing our problem. Slicing can reduce the number of the features along with better prediction. I chose to slice our problem per origin airport and month of the year basis. After grouping data per origin airport and month of the year, there are few things need to be done on the data. I outlined those steps below:
 
-* _One Hot Encoding:_ Since we slice our problem per origin airport and month of the year, we do not need month column and origin airport column. We applied pandas get_dummies method on the remaining categorical variables.
-* _Data Splitting:_ The second step involves splitting the label encoded dataset into train and test datasets. In this project we split them equally with 75%-25% ratio. Also, we split them in such a manner that the fractions of both classes remain almost same in train and test datasets.
-* _Resampling:_ Since out data is imbalanced, where classes in the target variables is not distributed equally, we try random over sampling techniques to overcome this issue. One can also use random under sampling technique or other techniques such as SMOTE or SMOTENN in imbalanced-learn library, we decided to keep computational expenses low at this stage. 
-* _Hyperparameter Tuning with Cross Validation:_ Sometimes, rather than resampling, weighting the training samples works best using grid search algorithm. In the weighting technique, more weights are given to minority class examples. In our preliminary results, we see that random over resampling and hyperparameter tuning work best for logistic regression, so we stick with this method among all models.
-* _Scaling:_ Instead of using standard scaler from sklearn framework, we used maximum absolute scaler to keep our dummy variables same.
+* _One Hot Encoding:_ Since I slice our problem per origin airport and month of the year, I do not need month column and origin airport column. I applied pandas get_dummies method on the remaining categorical variables.
+* _Data Splitting:_ The second step involves splitting the label encoded dataset into train and test datasets. In this project I split them equally with 75%-25% ratio. Also, I split them in such a manner that the fractions of both classes remain almost same in train and test datasets.
+* _Resampling:_ Since out data is imbalanced, where classes in the target variables is not distributed equally, I try random over sampling techniques to overcome this issue. One can also use random under sampling technique or other techniques such as SMOTE or SMOTENN in imbalanced-learn library, I decided to keep computational expenses low at this stage. 
+* _Hyperparameter Tuning with Cross Validation:_ Sometimes, rather than resampling, weighting the training samples works best using grid search algorithm. In the weighting technique, more weights are given to minority class examples. In our preliminary results, I see that random over resampling and hyperparameter tuning work best for logistic regression, so I stick with this method among all models.
+* _Scaling:_ Instead of using standard scaler from sklearn framework, I used maximum absolute scaler to keep our dummy variables same.
 
 # Results
 
