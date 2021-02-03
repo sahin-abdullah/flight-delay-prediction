@@ -4,10 +4,8 @@ import time
 import subprocess
 import numpy as np
 import pandas as pd
-from utils import conv_timedelta, conv_type, create_report, df_man, df_par, df_datetime
+from utils import conv_timedelta, conv_type, df_man, df_datetime
 import datetime as dt
-from scipy import special
-import multiprocessing as mp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -45,7 +43,7 @@ def acquire(date_start, date_end):
     options.add_experimental_option('prefs', prefs)
     # Use chrome as a web browser
     browser = webdriver.Chrome(
-        executable_path="C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver", chrome_options=options)
+        executable_path="C:\\Program Files\\Google\\Chrome\\Application\\chromedriver", chrome_options=options)
     # Main page URL
     url = 'https://www.bts.gov/'
     # Get main page
@@ -118,7 +116,7 @@ def acquire(date_start, date_end):
     browser.close()
 
     my_path2 = os.path.dirname(os.path.dirname(my_path))
-    my_path2 = os.path.join(my_path2, 'flight_delay')
+    my_path2 = os.path.join(my_path2, 'source')
     return my_path, my_path2
 
 
@@ -142,7 +140,8 @@ def combine_csv(path1, path2):
     path1 = '/mnt/c/' + '/'.join(temp[1:])
     cmd_line = path2 + '/csv_process.sh'
     # No need to have +x permission
-    subprocess.run(['bash', cmd_line, path1])
+    result = subprocess.run(['bash', cmd_line, path1], stdout=subprocess.PIPE)
+    result.stdout
 
 
 def import_csv(p_fli, sd, ed):
@@ -410,12 +409,6 @@ def reval_nan(df):
     for col in div_cols:
         df.loc[(df.Div == 1) & df[col].notna(), div_cols] = np.nan
 
-    # cond = flights.ScDepTime > flights.ScArrTime
-    # idx = ((flights.loc[cond, 'ScDepTime'] + flights.loc[cond, 'ScElaTime'] + flights.loc[cond, 'TimeZoneDiff']) - flights.loc[cond, 'ScArrTime']) >= pd.Timedelta('1 hours')
-    # idx = np.where(idx, idx.index, 0)
-    # idx = idx[idx != 0]
-    # flights.drop(idx, inplace=True)
-
     # A condition for missing data
     def cond(x): return (pd.isna(df[x])) & ((df.Cncl != 1) | (df.Div != 1))
     df.loc[cond('DepTime'), 'DepTime'] = df.loc[cond('DepTime'),
@@ -633,8 +626,6 @@ def recover(df, airport, flag, date3, n, d):
         'ScElaTime', 'AcElaTime', 'AirTime']
     for col in cols:
         conv_timedelta(df, col, 'min')
-    # for name in cols:
-    #     df.loc[:, name] = df_par(df.loc[:, name], pd.to_timedelta)
 
     # No need to have Date column
     df = df.drop(columns=['Date'])
