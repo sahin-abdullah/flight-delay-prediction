@@ -48,7 +48,7 @@ The full exploratory data analysis can be looked at this [jupyter notebook](http
 
 ## Time of Day and Week
 
-![Cover Image](images\heat_map.png)
+![Cover Image](https://github.com/sahin-abdullah/flight-delay-prediction/blob/master/images/heat_map.png)
 
 The figure above summarizes average amount of delay in minutes by daily, hourly, and combined time intervals. One can realize that the two histograms around the heat map represent average delay with respect to daily (on the right) and hourly (on the top) axes. It is clearly seen that 3:00AM-4:00AM time slot is the worst time to fly, especially on Friday and Saturday nights, due to long average delays (>30mins). On the other hand, it is best to schedule a flight in the early morning (5:00AM - 10:00AM), because the average delays are way below the yearly average (10 mins). Towards the evening, the delays are monotonously increasing and reaching its peak at 6:00PM-7:00PM. One can interpret this graph as the sum of two gaussian distributions centered at the two peak delay times mentioned above. The standard deviation during the night is much smaller than the evening. I believe this is related to the low density of flights during the night.
 
@@ -70,13 +70,13 @@ From daily interval perspective,
 
 ## Holidays
 
-![Cover Image](images\holidays.png)
+![Cover Image](https://github.com/sahin-abdullah/flight-delay-prediction/blob/master/images/holidays.pngg)
 
 The graph above shows average amount of delay per day in four quarters of a year. Blue shaded area represents plus and minus five days from national holidays (in total 10 days). Federal Aviation Administration (FAA) considers any flight that is late more than 15 minutes as a delay. That's why I also emphasized 15 minutes with a dashed line in the plot. The increase in average delays before and after the national holidays can be associated with higher traffic density of the airports. This can be seen in the following figure.
 
 ## Wind Speed and Its Direction
 
-![Cover Image](images\wind.png)
+![Cover Image](https://github.com/sahin-abdullah/flight-delay-prediction/blob/master/images/wind.png)
 
 In this figure, the maximum wind speeds for each direction oberved in top 12 US airports are shown as a black solid line. The colored dots represent the amount of weather caused delay for corresponding wind speed and direction measured. In this figure, green dominant areas show that airport operation continues well under corresponding weather. Therefore, airports like Chicago O'Hare, Hartsfield-Jackson Atlanta, Dallas Fort Worth and George Bush are operating well for most of the wind speeds. On the other hand, Los Angeles, San Francisco, Phoenix Sky Harbor and McCarran are affected by even relatively low speeds. This difference is related to the design of the airport including its position, direction and length of the airport runways, type of the winds, and technological advancement of the airport. For example, Los Angeles and San Francisco are placed near ocean, therefore the winds from ocean can cause more problem even at low speeds due to immediate weather change. On the other hand, Chicago O'Hare is a large airport with several runways and still expanding. Its history shows that runway lengths and directions are changed to operate at high speed winds from North.
 
